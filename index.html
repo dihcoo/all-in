@@ -13,7 +13,7 @@
 *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; margin:0; padding:0; }
 
 body{
-background:var(–midnight); color:#fff;
+background:var(–midnight); color:#c8fff6;
 font-family:-apple-system,‘SF Pro Display’,BlinkMacSystemFont,sans-serif;
 height:100dvh; width:100vw; overflow:hidden;
 display:flex; justify-content:center; align-items:stretch;
@@ -40,7 +40,7 @@ z-index:1;
 transition:max-width 0.3s;
 box-shadow: 0 0 60px rgba(0,8,20,0.85), 0 0 1px rgba(0,255,204,0.06);
 /* Force all descendant text away from Safari’s default blue */
-color:#fff; -webkit-text-fill-color:#fff;
+color:#c8fff6; -webkit-text-fill-color:#c8fff6;
 }
 
 /* ── Header ── */
@@ -49,13 +49,13 @@ padding:10px 12px 8px; background:#080808;
 border-bottom:1.5px solid var(–neon);
 flex-shrink:0; display:flex;
 align-items:center; justify-content:space-between;
-gap:8px; color:#fff; -webkit-text-fill-color:#fff;
+gap:8px; color:#c8fff6; -webkit-text-fill-color:#c8fff6;
 }
 .top-header h1{
 font-size:0.85rem; letter-spacing:5px;
 text-transform:uppercase; font-weight:800;
 flex:1; text-align:center; white-space:nowrap;
-color:#fff; -webkit-text-fill-color:#fff;
+color:#c8fff6; -webkit-text-fill-color:#c8fff6;
 }
 .top-header h1 span{ color:var(–neon); }
 .hdr-btn{
@@ -116,7 +116,7 @@ background:var(–panel);
 .control-panel{
 background:#080808; padding:8px 14px 12px;
 border-top:1px solid #1a1a1a; flex-shrink:0;
-color:#fff; -webkit-text-fill-color:#fff;
+color:#c8fff6; -webkit-text-fill-color:#c8fff6;
 }
 #status-text{
 font-size:8px; letter-spacing:3px; color:var(–neon);
@@ -246,7 +246,7 @@ PLAYLIST DRAWER
 position:absolute;
 bottom:0; left:0; right:0;
 background:#050508;
-color:#fff; -webkit-text-fill-color:#fff;
+color:#c8fff6; -webkit-text-fill-color:#c8fff6;
 border-top:1.5px solid var(–neon);
 border-radius:14px 14px 0 0;
 transform:translateY(110%);
@@ -303,11 +303,11 @@ transition:background 0.1s; gap:9px;
 .track-num{ font-size:9px; color:rgba(0,255,204,0.35); min-width:20px; text-align:right; letter-spacing:1px; }
 .track-item.active .track-num{ color:var(–neon); }
 .track-name{
-font-size:10px; color:rgba(255,255,255,0.75); -webkit-text-fill-color:rgba(255,255,255,0.75);
+font-size:10px; color:rgba(200,255,246,0.75); -webkit-text-fill-color:rgba(200,255,246,0.75);
 flex:1; overflow:hidden;
 white-space:nowrap; text-overflow:ellipsis; letter-spacing:0.3px;
 }
-.track-item.active .track-name{ color:#fff; }
+.track-item.active .track-name{ color:#c8fff6; -webkit-text-fill-color:#c8fff6; }
 .track-dur{ font-size:8px; color:rgba(0,255,204,0.4); letter-spacing:1px; min-width:32px; text-align:right; }
 .track-item.active .track-dur{ color:rgba(0,255,204,0.7); }
 
@@ -1028,8 +1028,8 @@ document.addEventListener('touchmove', e=>{
     let sw, sh, SKY_STARS=[];
 
     const SKY_COLORS = [
-        [220,235,255],  // blue-white (most common)
-        [255,255,255],  // pure white
+        [190,240,255],  // cyan blue-white (most common)
+        [210,255,248],  // cyan-white
         [255,245,210],  // warm yellow-white
         [180,210,255],  // cool blue
         [255,220,180],  // amber (rare)
