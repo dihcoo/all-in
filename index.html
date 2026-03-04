@@ -1,368 +1,92 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>DepthImpact Hybrid - Pro Engine</title>
-<style>
-:root {
-    --neon:#00ffcc; --neon-dim:rgba(0,255,204,0.25);
-    --bg:#000000; --panel:#0d0d10; --red:#ff0033; --white:#ffffff;
-}
-*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; margin:0; padding:0; }
-
-body {
-    background:var(--bg); color:rgba(220,255,248,0.9);
-    font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,sans-serif;
-    height:100dvh; width:100vw; overflow:hidden;
-    display:flex; justify-content:center; align-items:stretch;
-}
-
-#sky-canvas { position:fixed; inset:0; z-index:0; pointer-events:none; }
-
-/* ── App Shell ── */
-.app-container {
-    width:100%; max-width:480px; display:flex; flex-direction:column;
-    position:relative; z-index:1; background:black; transition: max-width 0.3s;
-}
-
-/* ── Header ── */
-.top-header {
-    padding:12px; background:#000; border-bottom:1px solid rgba(0,255,204,0.2);
-    display:flex; align-items:center; justify-content:space-between; flex-shrink:0;
-}
-.top-header h1 { font-size:0.85rem; letter-spacing:5px; text-transform:uppercase; font-weight:800; color:#fff; }
-.top-header h1 span { color:var(--neon); }
-.hdr-btn {
-    font-size:8px; letter-spacing:1px; color:var(--neon); 
-    border:1px solid rgba(0,255,204,0.3); background:transparent;
-    padding:5px 8px; border-radius:4px; font-weight:700; cursor:pointer;
-}
-
-/* ── Main Display (Dome) ── */
-.main-interface {
-    flex:1.2; display:flex; flex-direction:column; align-items:center; justify-content:center;
-    background: radial-gradient(circle at center, #0a1818 0%, #000 100%);
-    border-radius: 50% 50% 0 0 / 15% 15% 0 0;
-    position:relative; overflow:hidden; border-top:1px solid rgba(0,255,204,0.1);
-}
-.sphere-label { font-size:8px; letter-spacing:4px; color:var(--neon); text-transform:uppercase; opacity:0.6; margin-bottom:15px; }
-#vc { border-radius:50%; touch-action:none; }
-
-/* ── Control Panel ── */
-.control-panel { background:#000; padding:10px 20px 20px; display:flex; flex-direction:column; gap:12px; flex-shrink:0; }
-#status-text { font-size:9px; letter-spacing:3px; color:var(--neon); text-align:center; text-transform:uppercase; }
-
-/* ── Pill Sliders ── */
-input[type=range] { -webkit-appearance:none; background:rgba(255,255,255,0.15); height:2px; }
-input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance:none; height:22px; width:12px;
-    background:#fff; border-radius:6px; cursor:pointer;
-    box-shadow: 0 0 8px rgba(255,255,255,0.4);
-}
-
-.console-row { display:grid; grid-template-columns:1fr 1.4fr 1fr; align-items:center; gap:15px; margin:5px 0; }
-.slider-bundle { display:flex; flex-direction:column; align-items:center; gap:8px; }
-.v-track { width:20px; height:80px; display:flex; align-items:center; justify-content:center; }
-.v-track input { transform:rotate(-90deg); width:80px; }
-.slider-label { font-size:7px; font-weight:800; letter-spacing:1.5px; color:#fff; text-transform:uppercase; }
-
-#btn-bypass {
-    width:100%; height:55px; background:var(--neon); color:#000;
-    border:none; border-radius:8px; font-weight:900; font-size:10px;
-    letter-spacing:1px; box-shadow:0 0 20px var(--neon); cursor:pointer;
-}
-#btn-bypass.inactive { background:#111; color:#444; box-shadow:none; border:1px solid #222; }
-
-.transport-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:4px; }
-.transport-grid button { background:transparent; border:1px solid #222; color:var(--neon); padding:10px 0; font-size:9px; border-radius:4px; }
-
-/* ── LIBRARY DRAWER (Updated to match images) ── */
-.playlist-drawer {
-    position:absolute; bottom:0; left:0; right:0; background:#020202;
-    z-index:100; transform:translateY(100%); transition:transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    display:flex; flex-direction:column; border-top: 2px solid var(--neon);
-    border-radius: 14px 14px 0 0; max-height: 80dvh;
-}
-.playlist-drawer.open { transform:translateY(0); }
-
-.drawer-header {
-    padding:12px 15px; display:flex; align-items:center; justify-content:space-between;
-    border-bottom: 1px solid #111;
-}
-.drawer-title { font-size:10px; font-weight:900; letter-spacing:3px; color:var(--neon); }
-.drawer-stats { font-size:8px; color:rgba(0,255,204,0.5); letter-spacing:1px; }
-.drawer-top-actions { display:flex; gap:6px; }
-
-.lib-btn {
-    background: transparent; border: 1px solid rgba(0,255,204,0.3);
-    color: var(--neon); font-size: 7px; font-weight: 700; padding: 5px 10px;
-    border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 4px;
-}
-.lib-btn.clear { color: var(--red); border-color: rgba(255,0,51,0.3); }
-
-.drawer-add-row {
-    padding: 10px 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-    border-bottom: 1px solid #111;
-}
-.add-btn {
-    background: rgba(0,255,204,0.03); border: 1px solid rgba(0,255,204,0.4);
-    color: var(--neon); font-size: 8px; font-weight: 800; padding: 12px;
-    border-radius: 6px; letter-spacing: 1px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; gap: 6px;
-}
-
-.track-list { flex:1; overflow-y:auto; padding:5px 0; }
-.empty-state { padding: 40px; text-align: center; color: rgba(0,255,204,0.3); font-size: 9px; letter-spacing: 2px; line-height: 1.6; }
-
-/* ── Landscape Optimization ── */
-@media (orientation: landscape) {
-    .app-container { max-width: 100vw; flex-direction: row; }
-    .left-col { width: 45%; border-right: 1px solid #111; display: flex; flex-direction: column; }
-    .right-col { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
-    .main-interface { border-radius: 0; flex: 1; }
-    .playlist-drawer { position: fixed; right: 0; top: 0; bottom: 0; left: auto; width: 50vw; transform: translateX(100%); border-top: 0; border-left: 2px solid var(--neon); border-radius: 0; }
-    .playlist-drawer.open { transform: translateX(0); }
-}
-
-</style>
-</head>
-<body>
-
-<canvas id="sky-canvas"></canvas>
-
-<div class="app-container" id="shell">
-    <div class="top-header" id="hdr">
-        <h1>DEPTH<span>IMPACT</span> HYBRID</h1>
-        <button class="hdr-btn" id="btn-library">≡ LIBRARY</button>
-    </div>
-
-    <div class="main-interface" id="sphere-view">
-        <div class="sphere-label">IMMERSION SPHERE</div>
-        <canvas id="vc"></canvas>
-        <div id="now-playing" style="font-size:7px; color:var(--neon); margin-top:10px; opacity:0.5;">—</div>
-    </div>
-
-    <div class="control-panel" id="ctrl">
-        <div id="status-text">LOAD A FILE · PRESS PLAY</div>
-
-        <div class="progress-wrap">
-            <input type="range" id="seek-bar" min="0" max="1000" value="0">
-            <span class="time-label" id="time-display">0:00</span>
-        </div>
-
-        <div class="console-row">
-            <div class="slider-bundle">
-                <div class="v-track"><input type="range" id="clarity" min="0" max="100" value="50"></div>
-                <span class="slider-label">CLARITY</span>
-            </div>
-            <div style="display:flex; flex-direction:column; align-items:center;">
-                <button id="btn-bypass">PROCESS<br>ON</button>
-                <span style="font-size:7px; letter-spacing:2px; color:var(--neon); margin-top:5px; font-weight:700;">BYPASS</span>
-            </div>
-            <div class="slider-bundle">
-                <div class="v-track"><input type="range" id="depth" min="0" max="100" value="50"></div>
-                <span class="slider-label">DEPTH</span>
-            </div>
-        </div>
-
-        <div class="slider-bundle" style="width:100%;">
-            <span class="slider-label">LO CONTOUR</span>
-            <input type="range" id="contour" style="width:100%" min="0" max="100" value="20">
-        </div>
-
-        <div class="transport-grid">
-            <button id="btn-prev">|◀</button>
-            <button id="btn-rw">« RW</button>
-            <button id="btn-play">▶ PLAY</button>
-            <button id="btn-stop">■ STOP</button>
-            <button id="btn-ff">FF »</button>
-            <button id="btn-next">▶|</button>
-        </div>
-
-        <button id="btn-rec" style="width:100%; background:transparent; border:1px solid #222; color:#fff; padding:12px; font-size:9px; border-radius:4px;">● REC MP3</button>
-    </div>
-
-    <div class="playlist-drawer" id="drawer">
-        <div class="drawer-header">
-            <div style="display:flex; flex-direction:column;">
-                <span class="drawer-title">LIBRARY</span>
-                <span class="drawer-stats" id="track-count">0 TRACKS</span>
-            </div>
-            <div class="drawer-top-actions">
-                <button class="lib-btn" id="btn-save">💾 SAVE</button>
-                <button class="lib-btn clear" id="btn-clear">✕ CLEAR</button>
-                <button class="lib-btn" id="btn-close">CLOSE</button>
-            </div>
-        </div>
-        <div class="drawer-add-row">
-            <label class="add-btn">
-                <span>⊙ ADD FILES</span>
-                <input type="file" id="f-upload" multiple style="display:none">
-            </label>
-            <button class="add-btn" id="btn-folder">📁 ADD FOLDER</button>
-        </div>
-        <div class="track-list" id="track-list">
-            <div class="empty-state">NO TRACKS LOADED<br>USE ADD FILES OR FOLDER ABOVE</div>
-        </div>
-    </div>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js"></script>
-<script>
-"use strict";
-
-// ── Audio Core (BBE 882 + FBQ1000 + DBX AFS2 Emulation) ──
-let audioCtx, analyser, source;
-let fbqStage, afs2Parallel, bbeCrossover, bbeHi, bbeLo, bbeDelay, bbeGain, master;
+// ── Updated Audio Core Logic ──
+let audioCtx, analyser, sourceNode;
+let fbqStage, afs2Parallel, bbeHi, bbeLo, bbeDelay, bbeGain, master, afs2Gain;
 let isProcess = true, playlist = [], currentIdx = -1;
-
-function initAudio() {
-    if(audioCtx) return;
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    analyser = audioCtx.createAnalyser(); analyser.fftSize = 256;
-    source = audioCtx.createMediaElementSource(document.getElementById('audio-el'));
-
-    // 1. FBQ1000 (Series Notch Filters for feedback suppression)
-    fbqStage = audioCtx.createBiquadFilter();
-    fbqStage.type = "notch"; fbqStage.frequency.value = 800; fbqStage.Q.value = 10;
-
-    // 2. DBX AFS2 (Parallel Path)
-    afs2Parallel = audioCtx.createBiquadFilter();
-    afs2Parallel.type = "notch"; afs2Parallel.frequency.value = 1200;
-    const afs2Gain = audioCtx.createGain(); afs2Gain.gain.value = 0.4;
-
-    // 3. BBE 882 Sonic Maximizer Emulation
-    // Phase correction is simulated by high-shelf (Clarity) and low-shelf (Contour)
-    bbeHi = audioCtx.createBiquadFilter(); bbeHi.type = "highshelf"; bbeHi.frequency.value = 3500;
-    bbeLo = audioCtx.createBiquadFilter(); bbeLo.type = "lowshelf"; bbeLo.frequency.value = 150;
-    bbeDelay = audioCtx.createDelay(0.1); // Harmonic depth
-    bbeGain = audioCtx.createGain();
-
-    master = audioCtx.createGain();
-
-    // Routing
-    source.connect(fbqStage); 
-    
-    // Path A: BBE Process
-    fbqStage.connect(bbeHi);
-    bbeHi.connect(bbeLo);
-    bbeLo.connect(bbeDelay);
-    bbeDelay.connect(bbeGain);
-    
-    // Path B: Parallel AFS2
-    fbqStage.connect(afs2Parallel);
-    afs2Parallel.connect(afs2Gain);
-
-    // Merge
-    bbeGain.connect(master);
-    afs2Gain.connect(master);
-    master.connect(analyser);
-    analyser.connect(audioCtx.destination);
-}
-
-function updateParams() {
-    if(!audioCtx) return;
-    const clarity = document.getElementById('clarity').value / 100;
-    const depth = document.getElementById('depth').value / 100;
-    const contour = document.getElementById('contour').value / 100;
-
-    if(isProcess) {
-        bbeHi.gain.value = clarity * 15;
-        bbeLo.gain.value = contour * 15;
-        bbeDelay.delayTime.value = 0.005 + (depth * 0.05);
-        bbeGain.gain.value = 1.0;
-    } else {
-        bbeHi.gain.value = 0; bbeLo.gain.value = 0; bbeGain.gain.value = 0.7;
-    }
-}
-
-// ── UI Handling ──
-const drawer = document.getElementById('drawer');
-document.getElementById('btn-library').onclick = () => drawer.classList.add('open');
-document.getElementById('btn-close').onclick = () => drawer.classList.remove('open');
-
-// Landscape Adaptation
-function checkLayout() {
-    const shell = document.getElementById('shell');
-    if(window.innerWidth > window.innerHeight && window.innerHeight < 500) {
-        if(!document.querySelector('.left-col')) {
-            const l = document.createElement('div'); l.className = 'left-col';
-            const r = document.createElement('div'); r.className = 'right-col';
-            l.append(document.getElementById('hdr'), document.getElementById('sphere-view'));
-            r.append(document.getElementById('ctrl'));
-            shell.prepend(l, r);
-        }
-    } else {
-        const l = document.querySelector('.left-col');
-        if(l) {
-            shell.append(document.getElementById('hdr'), document.getElementById('sphere-view'), document.getElementById('ctrl'));
-            l.nextSibling.remove(); l.remove();
-        }
-    }
-}
-window.onresize = checkLayout;
-checkLayout();
-
-// ── Animation logic preserved from previous turn ──
-const canvas = document.getElementById('vc');
-const ctx = canvas.getContext('2d');
-let SIZE = 240; canvas.width = SIZE; canvas.height = SIZE;
-function draw() {
-    requestAnimationFrame(draw);
-    ctx.clearRect(0,0,SIZE,SIZE);
-    const freq = new Uint8Array(analyser ? analyser.frequencyBinCount : 64);
-    if(analyser) analyser.getByteFrequencyData(freq);
-    
-    // Simple visualizer representative of the sphere
-    ctx.beginPath(); ctx.arc(120, 120, 100, 0, Math.PI*2);
-    ctx.strokeStyle = `rgba(0,255,204,${0.2 + (freq[10]/255)})`;
-    ctx.lineWidth = 2; ctx.stroke();
-}
-draw();
-
-// ── Playlist Logic ──
 const audioEl = document.getElementById('audio-el');
-document.getElementById('f-upload').onchange = (e) => {
-    const files = Array.from(e.target.files);
-    files.forEach(f => playlist.push({name: f.name, url: URL.createObjectURL(f)}));
-    updateList();
-};
 
-function updateList() {
-    const list = document.getElementById('track-list');
-    document.getElementById('track-count').textContent = `${playlist.length} TRACKS`;
-    if(playlist.length === 0) {
-        list.innerHTML = '<div class="empty-state">NO TRACKS LOADED...</div>';
-        return;
+async function initAudio() {
+    // Only initialize the context and nodes ONCE
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 256;
+
+        // Ensure the audio element is ready for Web Audio
+        sourceNode = audioCtx.createMediaElementSource(audioEl);
+
+        // 1. FBQ1000 Stage (Series)
+        fbqStage = audioCtx.createBiquadFilter();
+        fbqStage.type = "notch";
+        fbqStage.frequency.value = 800;
+        fbqStage.Q.value = 10;
+
+        // 2. DBX AFS2 Stage (Parallel Path)
+        afs2Parallel = audioCtx.createBiquadFilter();
+        afs2Parallel.type = "notch";
+        afs2Parallel.frequency.value = 1200;
+        afs2Gain = audioCtx.createGain();
+        afs2Gain.gain.value = 0.4;
+
+        // 3. BBE 882 Emulation Stage
+        bbeHi = audioCtx.createBiquadFilter(); bbeHi.type = "highshelf"; bbeHi.frequency.value = 3500;
+        bbeLo = audioCtx.createBiquadFilter(); bbeLo.type = "lowshelf"; bbeLo.frequency.value = 150;
+        bbeDelay = audioCtx.createDelay(0.1);
+        bbeGain = audioCtx.createGain();
+
+        master = audioCtx.createGain();
+
+        // ── SIGNAL ROUTING ──
+        // Source -> FBQ1000 (Series)
+        sourceNode.connect(fbqStage);
+
+        // Path A: BBE Sonic Maximizer Path
+        fbqStage.connect(bbeHi);
+        bbeHi.connect(bbeLo);
+        bbeLo.connect(bbeDelay);
+        bbeDelay.connect(bbeGain);
+
+        // Path B: DBX AFS2 (Parallel)
+        fbqStage.connect(afs2Parallel);
+        afs2Parallel.connect(afs2Gain);
+
+        // Sum Paths -> Master -> Analyser -> Output
+        bbeGain.connect(master);
+        afs2Gain.connect(master);
+        master.connect(analyser);
+        analyser.connect(audioCtx.destination);
     }
-    list.innerHTML = playlist.map((t, i) => `
-        <div class="lib-btn" style="width:100%; justify-content:flex-start; margin:2px 0; border:none; ${i===currentIdx?'background:rgba(0,255,204,0.1)':''}" onclick="playTrack(${i})">
-            ${i+1}. ${t.name}
-        </div>
-    `).join('');
+
+    // Always attempt to resume the context on a user gesture
+    if (audioCtx.state === 'suspended') {
+        await audioCtx.resume();
+    }
 }
 
-window.playTrack = (i) => {
-    initAudio();
-    currentIdx = i;
-    audioEl.src = playlist[i].url;
-    audioEl.play();
-    document.getElementById('now-playing').textContent = playlist[i].name;
-    updateList();
+// ── Optimized Playback Function ──
+window.playTrack = async (i) => {
+    try {
+        await initAudio(); // Ensure engine is alive
+        currentIdx = i;
+        
+        // Only update source if it's a new track
+        if (audioEl.src !== playlist[i].url) {
+            audioEl.src = playlist[i].url;
+            audioEl.load();
+        }
+
+        const playPromise = audioEl.play();
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                document.getElementById('now-playing').textContent = playlist[i].name;
+                document.getElementById('status-text').textContent = "PROCESSING...";
+                updateParams();
+                updateList();
+            }).catch(error => {
+                console.error("Playback failed:", error);
+                document.getElementById('status-text').textContent = "PLAYBACK BLOCKED";
+            });
+        }
+    } catch (e) {
+        console.error("Audio init error:", e);
+    }
 };
-
-document.getElementById('btn-play').onclick = () => { if(playlist.length) playTrack(currentIdx < 0 ? 0 : currentIdx); };
-document.getElementById('btn-stop').onclick = () => audioEl.pause();
-document.getElementById('btn-bypass').onclick = function() {
-    isProcess = !isProcess;
-    this.className = isProcess ? '' : 'inactive';
-    updateParams();
-};
-
-['clarity','depth','contour'].forEach(id => document.getElementById(id).oninput = updateParams);
-
-</script>
-<audio id="audio-el" hidden></audio>
-</body>
-</html>
