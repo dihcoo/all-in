@@ -1,367 +1,396 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>DepthImpact Hybrid - Professional</title>
-<style>
-:root {
-    --neon:#00ffcc; --neon-dim:rgba(0,255,204,0.25);
-    --bg:#000000; --panel:#0d0d10; --red:#ff0033; --white:#ffffff;
-}
-*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; margin:0; padding:0; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Depthimpact Hybrid</title>
+    <style>
+        :root {
+            --bg-color: #050a08;
+            --neon-green: #38e4a5;
+            --dark-green: #1a4a38;
+            --text-muted: #6b9a88;
+            --white: #ffffff;
+        }
 
-body {
-    background:var(--bg); color:rgba(220,255,248,0.9);
-    font-family:-apple-system,'SF Pro Display',BlinkMacSystemFont,sans-serif;
-    height:100dvh; width:100vw; overflow:hidden;
-    display:flex; justify-content:center; align-items:stretch;
-}
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace; /* Monospace for tech feel */
+            user-select: none;
+        }
 
-#sky-canvas { position:fixed; inset:0; z-index:0; pointer-events:none; }
+        body {
+            background-color: var(--bg-color);
+            color: var(--neon-green);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
 
-/* ── App Layout ── */
-.app-container {
-    width:100%; max-width:480px; display:flex; flex-direction:column;
-    position:relative; z-index:1; background:black; transition: max-width 0.3s;
-}
+        .app-container {
+            width: 100%;
+            max-width: 450px;
+            height: 100vh;
+            max-height: 900px;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            position: relative;
+        }
 
-.top-header {
-    padding:12px; background:#000; border-bottom:1px solid rgba(0,255,204,0.15);
-    display:flex; align-items:center; justify-content:space-between; flex-shrink:0;
-}
-.top-header h1 { font-size:0.85rem; letter-spacing:5px; text-transform:uppercase; font-weight:800; color:#fff; }
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 14px;
+            font-weight: bold;
+        }
 
-/* ── The Dome ── */
-.main-interface {
-    flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
-    background: radial-gradient(circle at center, #0a1c1c 0%, #000 100%);
-    border-radius: 50% 50% 0 0 / 15% 15% 0 0;
-    position:relative; overflow:hidden; border-top:1px solid rgba(0,255,204,0.1);
-}
-.sphere-label { font-size:8px; letter-spacing:4px; color:var(--neon); text-transform:uppercase; opacity:0.6; position:absolute; top:30px; }
-#vc { border-radius:50%; touch-action:none; }
+        .library-btn {
+            background: transparent;
+            border: 1px solid var(--neon-green);
+            color: var(--neon-green);
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 10px;
+            cursor: pointer;
+            letter-spacing: 1px;
+            transition: all 0.2s;
+        }
+        
+        .library-btn:hover {
+            background: var(--dark-green);
+        }
 
-/* ── Controls ── */
-.control-panel { background:#000; padding:10px 20px 20px; display:flex; flex-direction:column; gap:10px; flex-shrink:0; }
-#status-text { font-size:8px; letter-spacing:3px; color:var(--neon); text-align:center; text-transform:uppercase; opacity:0.8; }
+        /* Immersion Sphere */
+        .sphere-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
 
-/* Pill Sliders */
-input[type=range] { -webkit-appearance:none; background:rgba(255,255,255,0.15); height:2px; border:none; }
-input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance:none; height:24px; width:12px;
-    background:#fff; border-radius:6px; cursor:pointer;
-    box-shadow: 0 0 10px rgba(255,255,255,0.5);
-}
+        .sphere-title {
+            font-size: 12px;
+            letter-spacing: 3px;
+            margin-bottom: 20px;
+        }
 
-.console-row { display:grid; grid-template-columns:1fr 1.5fr 1fr; align-items:center; gap:15px; margin:5px 0; }
-.v-track { width:20px; height:80px; display:flex; align-items:center; justify-content:center; }
-.v-track input { transform:rotate(-90deg); width:80px; }
-.slider-label { font-size:7px; font-weight:800; letter-spacing:1.5px; color:#fff; text-transform:uppercase; margin-top:5px; }
+        .sphere-container {
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            border: 1px solid rgba(56, 228, 165, 0.2);
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: rotateSphere 20s linear infinite;
+        }
 
-#btn-bypass {
-    width:100%; height:55px; background:var(--neon); color:#000;
-    border:none; border-radius:8px; font-weight:900; font-size:10px;
-    letter-spacing:1px; box-shadow:0 0 15px var(--neon); cursor:pointer;
-}
-#btn-bypass.inactive { background:#111; color:#444; box-shadow:none; border:1px solid #222; }
+        .star {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background-color: var(--neon-green);
+            border-radius: 50%;
+            box-shadow: 0 0 15px var(--neon-green), 0 0 30px var(--neon-green);
+            animation: pulseStar 2s infinite alternate;
+        }
 
-.transport-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:4px; }
-.transport-grid button { background:transparent; border:1px solid #222; color:var(--neon); padding:10px 0; font-size:9px; border-radius:4px; cursor:pointer;}
+        /* Positioning the 8 stars in a circle */
+        .star:nth-child(1) { transform: rotate(0deg) translateY(-90px); }
+        .star:nth-child(2) { transform: rotate(45deg) translateY(-90px); }
+        .star:nth-child(3) { transform: rotate(90deg) translateY(-90px); }
+        .star:nth-child(4) { transform: rotate(135deg) translateY(-90px); }
+        .star:nth-child(5) { transform: rotate(180deg) translateY(-90px); }
+        .star:nth-child(6) { transform: rotate(225deg) translateY(-90px); }
+        .star:nth-child(7) { transform: rotate(270deg) translateY(-90px); }
+        .star:nth-child(8) { transform: rotate(315deg) translateY(-90px); }
 
-/* ── Library (Image 3 Style) ── */
-.playlist-drawer {
-    position:absolute; bottom:0; left:0; right:0; background:#020202;
-    z-index:100; transform:translateY(100%); transition:transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    display:flex; flex-direction:column; border-top: 2px solid var(--neon);
-    border-radius: 14px 14px 0 0; max-height: 85dvh;
-}
-.playlist-drawer.open { transform:translateY(0); }
+        /* Track Info */
+        .track-info {
+            text-align: center;
+            margin-bottom: 20px;
+        }
 
-.drawer-header { padding:12px 15px; display:flex; align-items:center; justify-content:space-between; border-bottom: 1px solid #111; }
-.drawer-title { font-size:10px; font-weight:900; letter-spacing:3px; color:var(--neon); }
-.lib-btn { background: transparent; border: 1px solid rgba(0,255,204,0.3); color: var(--neon); font-size: 7px; font-weight: 700; padding: 5px 8px; border-radius: 4px; cursor: pointer; }
-.lib-btn.clear { color: var(--red); border-color: rgba(255,0,51,0.3); }
+        .track-name {
+            font-size: 12px;
+            color: var(--white);
+            margin-bottom: 5px;
+        }
 
-.drawer-add-row { padding: 10px 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; border-bottom: 1px solid #111; }
-.add-btn { background: rgba(0,255,204,0.03); border: 1px solid rgba(0,255,204,0.4); color: var(--neon); font-size: 8px; font-weight: 800; padding: 12px; border-radius: 6px; cursor: pointer; text-align: center; }
+        .processing-text {
+            font-size: 10px;
+            letter-spacing: 2px;
+            animation: blink 1.5s infinite;
+        }
 
-.track-list { flex:1; overflow-y:auto; min-height: 200px; }
-.empty-state { padding: 50px 20px; text-align: center; color: rgba(0,255,204,0.3); font-size: 9px; letter-spacing: 2px; line-height: 1.6; }
+        /* Progress Bar */
+        .progress-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 10px;
+            margin-bottom: 30px;
+        }
 
-/* ── Responsive ── */
-@media (orientation: landscape) {
-    .app-container { max-width: 100vw; flex-direction: row; }
-    .side-left { width: 45%; border-right: 1px solid #111; display: flex; flex-direction: column; }
-    .side-right { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
-    .main-interface { border-radius: 0; flex: 1; }
-    .playlist-drawer { width: 50vw; left: auto; top: 0; border-top: 0; border-left: 2px solid var(--neon); border-radius: 0; transform: translateX(100%); }
-    .playlist-drawer.open { transform: translateX(0); }
-}
-</style>
+        .progress-bar {
+            flex-grow: 1;
+            height: 2px;
+            background: var(--dark-green);
+            position: relative;
+        }
+
+        .progress-fill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 45%;
+            background: var(--neon-green);
+            box-shadow: 0 0 5px var(--neon-green);
+        }
+
+        /* Main Controls Layout */
+        .main-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 0 10px;
+        }
+
+        /* Vertical Sliders (Clarity & Depth) */
+        .vertical-slider-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .vertical-slider {
+            writing-mode: vertical-lr;
+            direction: rtl;
+            width: 8px;
+            height: 100px;
+            -webkit-appearance: slider-vertical;
+            accent-color: var(--neon-green);
+            cursor: pointer;
+        }
+
+        .slider-label {
+            font-size: 10px;
+            letter-spacing: 1px;
+        }
+
+        /* Center Process Button */
+        .center-process {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .process-btn-group {
+            background: var(--dark-green);
+            border-radius: 8px;
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .btn-process {
+            background: var(--neon-green);
+            color: var(--bg-color);
+            border: none;
+            padding: 15px 30px;
+            font-weight: bold;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            letter-spacing: 2px;
+            box-shadow: 0 0 15px rgba(56, 228, 165, 0.4);
+            margin-bottom: 5px;
+        }
+
+        .btn-bypass {
+            background: transparent;
+            color: var(--text-muted);
+            border: none;
+            padding: 5px;
+            font-size: 10px;
+            letter-spacing: 2px;
+            cursor: pointer;
+        }
+
+        /* Horizontal Slider (Lo Contour) */
+        .horizontal-slider-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .horizontal-slider {
+            width: 60%;
+            accent-color: var(--neon-green);
+            cursor: pointer;
+        }
+
+        /* Transport Controls */
+        .transport-controls {
+            display: flex;
+            justify-content: space-between;
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+
+        .btn-transport {
+            flex: 1;
+            background: transparent;
+            border: 1px solid var(--dark-green);
+            color: var(--neon-green);
+            padding: 10px 0;
+            border-radius: 5px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-transport:hover, .btn-transport.active {
+            border-color: var(--neon-green);
+            background: rgba(56, 228, 165, 0.1);
+        }
+
+        /* Footer Record Button */
+        .footer-controls {
+            display: flex;
+            justify-content: center;
+        }
+
+        .btn-rec {
+            background: transparent;
+            border: 1px solid var(--dark-green);
+            color: var(--text-muted);
+            padding: 8px 30px;
+            border-radius: 20px;
+            font-size: 10px;
+            letter-spacing: 1px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .rec-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--neon-green);
+            border-radius: 50%;
+        }
+
+        /* Animations */
+        @keyframes rotateSphere {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulseStar {
+            0% { transform: scale(0.8); opacity: 0.6; }
+            100% { transform: scale(1.2); opacity: 1; }
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+    </style>
 </head>
 <body>
 
-<canvas id="sky-canvas"></canvas>
+<div class="app-container">
+    
+    <header>
+        <div>DEPTHIMPACT HYBRID</div>
+        <button class="library-btn" onclick="alert('Library Modal Removed for Immersion!')"># LIBRARY</button>
+    </header>
 
-<div class="app-container" id="main-shell">
-    <div class="side-left" id="s-left">
-        <header class="top-header" id="header">
-            <h1>DEPTH<span>IMPACT</span> HYBRID</h1>
-            <button class="lib-btn" onclick="toggleLib(true)">≡ LIBRARY</button>
-        </header>
-
-        <section class="main-interface">
-            <div class="sphere-label">IMMERSION SPHERE</div>
-            <canvas id="vc"></canvas>
-            <div id="now-playing" style="font-size:7px; color:var(--neon); margin-top:10px; opacity:0.6;">—</div>
-        </section>
-    </div>
-
-    <div class="side-right" id="s-right">
-        <section class="control-panel">
-            <div id="status-text">LOAD A FILE · PRESS PLAY</div>
-
-            <div class="progress-wrap">
-                <input type="range" id="seek-bar" min="0" max="1000" value="0">
-                <span class="time-label" id="time-display" style="font-size:9px; color:var(--neon);">0:00</span>
-            </div>
-
-            <div class="console-row">
-                <div style="display:flex; flex-direction:column; align-items:center;">
-                    <div class="v-track"><input type="range" id="clarity" min="0" max="100" value="50"></div>
-                    <span class="slider-label">CLARITY</span>
-                </div>
-                <div style="display:flex; flex-direction:column; align-items:center;">
-                    <button id="btn-bypass">PROCESS<br>ON</button>
-                    <span style="font-size:7px; letter-spacing:2px; color:var(--neon); margin-top:5px; font-weight:700;">BYPASS</span>
-                </div>
-                <div style="display:flex; flex-direction:column; align-items:center;">
-                    <div class="v-track"><input type="range" id="depth" min="0" max="100" value="50"></div>
-                    <span class="slider-label">DEPTH</span>
-                </div>
-            </div>
-
-            <div style="display:flex; flex-direction:column; align-items:center; width:100%; margin-bottom:10px;">
-                <span class="slider-label">LO CONTOUR</span>
-                <input type="range" id="contour" style="width:100%" min="0" max="100" value="20">
-            </div>
-
-            <div class="transport-grid">
-                <button onclick="changeTrack(-1)">|◀</button>
-                <button onclick="seekRel(-5)">« RW</button>
-                <button id="play-pause">▶ PLAY</button>
-                <button onclick="stopAudio()">■ STOP</button>
-                <button onclick="seekRel(5)">FF »</button>
-                <button onclick="changeTrack(1)">▶|</button>
-            </div>
-
-            <button id="btn-rec" style="width:100%; background:transparent; border:1px solid #222; color:#fff; padding:12px; font-size:9px; border-radius:4px;">● REC MP3</button>
-        </section>
-    </div>
-
-    <div class="playlist-drawer" id="lib-drawer">
-        <div class="drawer-header">
-            <div style="display:flex; flex-direction:column;">
-                <span class="drawer-title">LIBRARY</span>
-                <span id="track-count" style="font-size:8px; color:rgba(0,255,204,0.5); letter-spacing:1px;">0 TRACKS</span>
-            </div>
-            <div style="display:flex; gap:6px;">
-                <button class="lib-btn">💾 SAVE</button>
-                <button class="lib-btn clear" onclick="clearLib()">✕ CLEAR</button>
-                <button class="lib-btn" onclick="toggleLib(false)">CLOSE</button>
-            </div>
-        </div>
-        <div class="drawer-add-row">
-            <label class="add-btn">⊙ ADD FILES<input type="file" id="f-in" multiple hidden></label>
-            <div class="add-btn" onclick="alert('Folder upload requires Chrome/Edge')">📁 ADD FOLDER</div>
-        </div>
-        <div class="track-list" id="t-list">
-            <div class="empty-state">NO TRACKS LOADED<br>USE ADD FILES OR FOLDER ABOVE</div>
+    <div class="sphere-section">
+        <div class="sphere-title">IMMERSION SPHERE</div>
+        <div class="sphere-container">
+            <div class="star"></div>
+            <div class="star"></div>
+            <div class="star"></div>
+            <div class="star"></div>
+            <div class="star"></div>
+            <div class="star"></div>
+            <div class="star"></div>
+            <div class="star"></div>
         </div>
     </div>
+
+    <div class="track-info">
+        <div class="track-name">EchoesoftheFirstHater.wav</div>
+        <div class="processing-text">PROCESSING...</div>
+    </div>
+
+    <div class="progress-container">
+        <span>1:24</span>
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+        <span></span>
+    </div>
+
+    <div class="main-controls">
+        <div class="vertical-slider-wrapper">
+            <input type="range" min="0" max="100" value="70" class="vertical-slider">
+            <span class="slider-label">CLARITY</span>
+        </div>
+
+        <div class="center-process">
+            <div class="process-btn-group">
+                <button class="btn-process">PROCESS ON</button>
+                <button class="btn-bypass">BYPASS</button>
+            </div>
+        </div>
+
+        <div class="vertical-slider-wrapper">
+            <input type="range" min="0" max="100" value="40" class="vertical-slider">
+            <span class="slider-label">DEPTH</span>
+        </div>
+    </div>
+
+    <div class="horizontal-slider-wrapper">
+        <span class="slider-label">LO CONTOUR</span>
+        <input type="range" min="0" max="100" value="80" class="horizontal-slider">
+    </div>
+
+    <div class="transport-controls">
+        <button class="btn-transport">« RW</button>
+        <button class="btn-transport active">► PLAY</button>
+        <button class="btn-transport">■ STOP</button>
+        <button class="btn-transport">FF »</button>
+        <button class="btn-transport">▶|</button>
+    </div>
+
+    <div class="footer-controls">
+        <button class="btn-rec">
+            <div class="rec-dot"></div> REC MP3
+        </button>
+    </div>
+
 </div>
 
-<audio id="audio-el" hidden></audio>
-
-<script>
-"use strict";
-
-// ── Audio Engine (BBE 882 / FBQ1000 / DBX AFS2) ──
-let audioCtx, analyser, source;
-let fbq, bbeHi, bbeLo, bbeDelay, bbeGain, dbxNotch, dbxGain, master;
-let isProcess = true, playlist = [], currentIdx = -1;
-const audioEl = document.getElementById('audio-el');
-
-async function initAudio() {
-    if (audioCtx) return;
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    analyser = audioCtx.createAnalyser(); analyser.fftSize = 256;
-    source = audioCtx.createMediaElementSource(audioEl);
-
-    // 1. FBQ1000 (Series Notch)
-    fbq = audioCtx.createBiquadFilter(); fbq.type = "notch"; fbq.frequency.value = 800; fbq.Q.value = 10;
-
-    // 2. DBX AFS2 (Parallel Path)
-    dbxNotch = audioCtx.createBiquadFilter(); dbxNotch.type = "notch"; dbxNotch.frequency.value = 1200;
-    dbxGain = audioCtx.createGain(); dbxGain.gain.value = 0.3;
-
-    // 3. BBE 882 Emulation
-    bbeHi = audioCtx.createBiquadFilter(); bbeHi.type = "highshelf"; bbeHi.frequency.value = 3500;
-    bbeLo = audioCtx.createBiquadFilter(); bbeLo.type = "lowshelf"; bbeLo.frequency.value = 150;
-    bbeDelay = audioCtx.createDelay(0.1);
-    bbeGain = audioCtx.createGain();
-
-    master = audioCtx.createGain();
-
-    // Routing: Source -> FBQ -> Split
-    source.connect(fbq);
-    
-    // Path A: BBE
-    fbq.connect(bbeHi); bbeHi.connect(bbeLo); bbeLo.connect(bbeDelay); bbeDelay.connect(bbeGain);
-    
-    // Path B: DBX (Parallel)
-    fbq.connect(dbxNotch); dbxNotch.connect(dbxGain);
-
-    // Sum -> Master
-    bbeGain.connect(master); dbxGain.connect(master);
-    master.connect(analyser); analyser.connect(audioCtx.destination);
-}
-
-function updateParams() {
-    if(!audioCtx) return;
-    const c = document.getElementById('clarity').value / 100;
-    const d = document.getElementById('depth').value / 100;
-    const l = document.getElementById('contour').value / 100;
-
-    if(isProcess) {
-        bbeHi.gain.value = c * 15;
-        bbeLo.gain.value = l * 15;
-        bbeDelay.delayTime.value = 0.005 + (d * 0.05);
-        bbeGain.gain.value = 1.0;
-        document.getElementById('status-text').textContent = "PROCESSING...";
-    } else {
-        bbeHi.gain.value = 0; bbeLo.gain.value = 0; bbeGain.gain.value = 0.7;
-        document.getElementById('status-text').textContent = "BYPASSED";
-    }
-}
-
-// ── Playback Logic ──
-async function playTrack(i) {
-    if (i < 0 || i >= playlist.length) return;
-    await initAudio();
-    if (audioCtx.state === 'suspended') await audioCtx.resume();
-    
-    currentIdx = i;
-    if (audioEl.src !== playlist[i].url) {
-        audioEl.src = playlist[i].url;
-        audioEl.load();
-    }
-    
-    audioEl.play().catch(e => console.error("Blocked:", e));
-    document.getElementById('now-playing').textContent = playlist[i].name;
-    updateList();
-    updateParams();
-}
-
-document.getElementById('play-pause').onclick = () => {
-    if(playlist.length === 0) return;
-    if(audioEl.paused) playTrack(currentIdx < 0 ? 0 : currentIdx);
-    else audioEl.pause();
-};
-
-function stopAudio() { audioEl.pause(); audioEl.currentTime = 0; }
-function seekRel(sec) { audioEl.currentTime += sec; }
-function changeTrack(dir) { playTrack((currentIdx + dir + playlist.length) % playlist.length); }
-
-document.getElementById('btn-bypass').onclick = function() {
-    isProcess = !isProcess;
-    this.className = isProcess ? '' : 'inactive';
-    this.innerHTML = isProcess ? 'PROCESS<br>ON' : 'PROCESS<br>OFF';
-    updateParams();
-};
-
-// ── Library Management ──
-function toggleLib(show) { document.getElementById('lib-drawer').classList.toggle('open', show); }
-
-document.getElementById('f-in').onchange = (e) => {
-    const files = Array.from(e.target.files);
-    files.forEach(f => playlist.push({name: f.name, url: URL.createObjectURL(f)}));
-    updateList();
-    if(currentIdx === -1) currentIdx = 0;
-};
-
-function updateList() {
-    const list = document.getElementById('t-list');
-    document.getElementById('track-count').textContent = `${playlist.length} TRACKS`;
-    if(playlist.length === 0) {
-        list.innerHTML = '<div class="empty-state">NO TRACKS LOADED...</div>';
-        return;
-    }
-    list.innerHTML = playlist.map((t, i) => `
-        <div style="padding:12px; font-size:9px; border-bottom:1px solid #111; cursor:pointer; color:${i===currentIdx? 'var(--neon)':'#888'}" onclick="playTrack(${i})">
-            ${i+1}. ${t.name}
-        </div>
-    `).join('');
-}
-
-function clearLib() { playlist = []; currentIdx = -1; audioEl.src = ""; updateList(); document.getElementById('now-playing').textContent = "—"; }
-
-// ── Visualizer ──
-const canvas = document.getElementById('vc');
-const ctx = canvas.getContext('2d');
-let SIZE = 240; canvas.width = SIZE; canvas.height = SIZE;
-function draw() {
-    requestAnimationFrame(draw);
-    ctx.clearRect(0,0,SIZE,SIZE);
-    const freq = new Uint8Array(analyser ? analyser.frequencyBinCount : 64);
-    if(analyser) analyser.getByteFrequencyData(freq);
-    
-    // Core visualizer circle
-    ctx.beginPath(); ctx.arc(120, 120, 100, 0, Math.PI*2);
-    ctx.strokeStyle = `rgba(0,255,204,${0.1 + (freq[10]/255)})`;
-    ctx.lineWidth = 2; ctx.stroke();
-    
-    // Simple Nodes
-    for(let i=0; i<8; i++) {
-        let ang = (i/8) * Math.PI * 2 + (Date.now()/2000);
-        let x = 120 + Math.cos(ang) * 80;
-        let y = 120 + Math.sin(ang) * 80;
-        ctx.fillStyle = varColor(freq[i*2] || 0);
-        ctx.beginPath(); ctx.arc(x,y, 3 + (freq[i*2]/50), 0, Math.PI*2); ctx.fill();
-    }
-}
-function varColor(v) { return `rgba(0,255,204,${0.3 + v/255})`; }
-draw();
-
-// ── Background Sky ──
-(function(){
-    const sky = document.getElementById('sky-canvas');
-    const sc = sky.getContext('2d');
-    let sw, sh;
-    function res(){ sw=sky.width=window.innerWidth; sh=sky.height=window.innerHeight; }
-    window.onresize = res; res();
-    function renderSky(){
-        sc.fillStyle = '#000'; sc.fillRect(0,0,sw,sh);
-        for(let i=0;i<80;i++){
-            sc.fillStyle = `rgba(255,255,255,${Math.random()*0.2})`;
-            sc.beginPath(); sc.arc(Math.random()*sw, Math.random()*sh, 0.8, 0, Math.PI*2); sc.fill();
-        }
-        requestAnimationFrame(renderSky);
-    }
-    renderSky();
-})();
-
-// Sliders mapping
-['clarity','depth','contour'].forEach(id => document.getElementById(id).oninput = updateParams);
-audioEl.ontimeupdate = () => {
-    if(!audioEl.duration) return;
-    document.getElementById('seek-bar').value = (audioEl.currentTime / audioEl.duration) * 1000;
-    const m = Math.floor(audioEl.currentTime/60), s = Math.floor(audioEl.currentTime%60);
-    document.getElementById('time-display').textContent = `${m}:${s<10?'0':''}${s}`;
-};
-document.getElementById('seek-bar').oninput = function(){ audioEl.currentTime = (this.value/1000) * audioEl.duration; };
-
-</script>
 </body>
 </html>
