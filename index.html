@@ -163,8 +163,8 @@
     }
     .progress-wrap input[type=range] { flex:1; height:18px; accent-color:var(--neon); cursor:pointer; }
     .time-label { font-size:8px; letter-spacing:1px; color:var(--neon); min-width:30px; text-align:right; opacity:.65; }
-    .transport-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:5px; margin-bottom:6px; }
-    .action-grid    { display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; }
+    .transport-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:4px; margin-bottom:6px; }
+    .action-grid    { display:grid; grid-template-columns:1fr; gap:5px; }
 
     button, .file-label {
         background: transparent; color: var(--neon);
@@ -305,7 +305,7 @@
 ```
 <div class="top-header">
     <h1>DEPTH<span>IMPACT</span> HYBRID</h1>
-    <button id="btn-playlist-toggle">☰ PLAYLIST</button>
+    <button id="btn-playlist-toggle">☰ LIBRARY</button>
 </div>
 
 <div class="main-interface">
@@ -346,27 +346,20 @@
         <input type="range" class="horizontal" id="contour" min="0" max="100" value="0">
     </div>
 
-    <!-- 5-button transport: prev | rw | play | stop | ff | next -->
     <div class="transport-grid">
-        <button id="btn-prev">|« PREV</button>
+        <button id="btn-prev">|◀ PREV</button>
         <button id="btn-rw">« RW</button>
         <button id="btn-play">▶ PLAY</button>
         <button id="btn-stop">■ STOP</button>
         <button id="btn-ff">FF »</button>
-    </div>
-    <!-- second transport row for next -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:6px;margin-top:0px;">
-        <div></div>
-        <div></div>
-        <button id="btn-next">NEXT »|</button>
+        <button id="btn-next">NEXT ▶|</button>
     </div>
 
+    <!-- Hidden file input — triggered by drawer -->
+    <input type="file" id="audio-upload" multiple
+        accept="audio/*,audio/mpeg,audio/mp4,audio/aac,audio/ogg,audio/wav,audio/flac,audio/x-m4a,.mp3,.m4a,.wav,.flac,.ogg,.aac"
+        style="display:none">
     <div class="action-grid">
-        <label for="audio-upload" class="file-label">⊕ LOAD FILES</label>
-        <input type="file" id="audio-upload" multiple
-            accept="audio/*,audio/mpeg,audio/mp4,audio/aac,audio/ogg,audio/wav,audio/flac,audio/x-m4a,.mp3,.m4a,.wav,.flac,.ogg,.aac"
-            style="display:none">
-        <button id="btn-folder">📁 FOLDER</button>
         <button id="btn-rec">● REC MP3</button>
     </div>
 </div>
@@ -529,16 +522,21 @@ function resumeCtx(){if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume()
 // ── Playlist management ───────────────────────────────────────────────────────
 const AUDIO_EXTS=/\.(mp3|m4a|wav|flac|ogg|aac|opus|weba|webm)$/i;
 
-function addFiles(files){
-    const filtered=[...files].filter(f=>AUDIO_EXTS.test(f.name)||f.type.startsWith('audio/'));
-    filtered.forEach(f=>{
-        const url=URL.createObjectURL(f);
-        const name=f.name.replace(/\.[^.]+$/,''); // strip extension
-        playlist.push({name,url,file:f});
-        probeDuration(url,playlist.length-1);
+async function addFiles(files){
+    const filtered = [...files].filter(f => AUDIO_EXTS.test(f.name) || f.type.startsWith('audio/'));
+    if(!filtered.length) return;
+    filtered.forEach(f => {
+        const url  = URL.createObjectURL(f);
+        const name = f.name.replace(/\.[^.]+$/, '');
+        playlist.push({ name, url, file: f });
+        probeDuration(url, playlist.length - 1);
     });
+    // Mark first track as current so PLAY knows what to load — but don't
+    // touch audioEl.src here; do that inside loadTrack when user hits Play.
+    if(currentIdx === -1) currentIdx = 0;
     renderPlaylist();
-    if(currentIdx===-1&&playlist.length>0) loadTrack(0,false);
+    nowPlaying.textContent = playlist[currentIdx].name;
+    setStatus('READY · PRESS PLAY');
 }
 
 function probeDuration(url,idx){
@@ -596,53 +594,91 @@ function renderPlaylist(){
 
 function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
+// ── Drawer open/close (must be defined before handleFileInput uses openDrawer) ──
+const drawer  = document.getElementById('playlist-drawer');
+const overlay = document.getElementById('drawer-overlay');
+function openDrawer() { drawer.classList.add('open'); overlay.classList.add('visible'); }
+function closeDrawer(){ drawer.classList.remove('open'); overlay.classList.remove('visible'); }
+document.getElementById('btn-playlist-toggle').addEventListener('click', openDrawer);
+document.getElementById('drawer-close').addEventListener('click', closeDrawer);
+overlay.addEventListener('click', closeDrawer);
+
 // ── File / folder loading ─────────────────────────────────────────────────────
 function handleFileInput(input){
-    input.addEventListener('change',function(e){
-        addFiles(e.target.files); this.value='';
+    input.addEventListener('change', async function(e){
+        await addFiles(e.target.files);
+        openDrawer();
+        this.value = '';
     });
 }
 handleFileInput(document.getElementById('audio-upload'));
 handleFileInput(document.getElementById('drawer-upload'));
 
+async function collectDirFiles(dirHandle, files){
+    // Recursively walk directory tree
+    for await(const entry of dirHandle.values()){
+        if(entry.kind==='file'&&AUDIO_EXTS.test(entry.name)){
+            const f=await entry.getFile();
+            files.push(f);
+        }else if(entry.kind==='directory'){
+            await collectDirFiles(entry, files); // recurse into subfolders
+        }
+    }
+}
+
 async function openFolder(){
     if(window.showDirectoryPicker){
         try{
+            setStatus('SELECTING FOLDER…');
             const dir=await window.showDirectoryPicker({mode:'read'});
+            setStatus('SCANNING…');
             const files=[];
-            for await(const entry of dir.values()){
-                if(entry.kind==='file'&&AUDIO_EXTS.test(entry.name)){
-                    const f=await entry.getFile(); files.push(f);
-                }
-            }
-            files.sort((a,b)=>a.name.localeCompare(b.name));
-            addFiles(files);
-            setStatus(files.length+' FILES LOADED');
-        }catch(e){if(e.name!=='AbortError')setStatus('FOLDER ACCESS DENIED');}
+            await collectDirFiles(dir, files);
+            if(!files.length){setStatus('NO AUDIO FILES FOUND');return;}
+            files.sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
+            await addFiles(files);   // await so playlist renders after all added
+            openDrawer();            // automatically open drawer to show loaded tracks
+            setStatus(files.length+' TRACKS LOADED');
+        }catch(e){
+            if(e.name!=='AbortError') setStatus('FOLDER ACCESS DENIED');
+            else setStatus(playlist.length?'READY':'LOAD A FILE · PRESS PLAY');
+        }
     }else{
-        // Fallback: webkitdirectory for older Chrome/Android
+        // iOS / older browser fallback — webkitdirectory
         const inp=document.createElement('input');
-        inp.type='file'; inp.multiple=true; inp.webkitdirectory=true;
-        inp.accept='audio/*';
-        inp.onchange=e=>{addFiles(e.target.files);};
+        inp.type='file'; inp.multiple=true;
+        inp.setAttribute('webkitdirectory','');
+        inp.setAttribute('directory','');
+        inp.accept='audio/*,.mp3,.m4a,.wav,.flac,.ogg,.aac';
+        inp.onchange=async e=>{
+            await addFiles(e.target.files);
+            openDrawer();
+            setStatus(playlist.length+' TRACKS LOADED');
+        };
         inp.click();
     }
 }
-document.getElementById('btn-folder').addEventListener('click',openFolder);
 document.getElementById('drawer-folder-btn').addEventListener('click',openFolder);
 
 // ── Transport ─────────────────────────────────────────────────────────────────
-document.getElementById('btn-play').addEventListener('click',function(){
-    if(!audioEl.src||audioEl.src===window.location.href){
-        if(playlist.length>0)loadTrack(0,true);
-        else setStatus('LOAD A FILE FIRST');
+document.getElementById('btn-play').addEventListener('click', function(){
+    // If nothing is loaded into the audio element yet but we have a playlist, load now
+    const srcUnset = !audioEl.src || audioEl.src === window.location.href;
+    if(srcUnset){
+        if(currentIdx >= 0 && playlist.length > 0){
+            loadTrack(currentIdx, true);   // loadTrack handles buildAudioGraph + play
+        } else if(playlist.length > 0){
+            loadTrack(0, true);
+        } else {
+            setStatus('LOAD A FILE FIRST');
+        }
         return;
     }
-    if(!audioReady&&!buildAudioGraph())return;
+    if(!audioReady && !buildAudioGraph()) return;
     resumeCtx();
     audioEl.play()
-        .then(()=>setStatus(isProcessing?'PROCESSING':'BYPASSED'))
-        .catch(e=>{console.error(e);setStatus('PLAYBACK BLOCKED');});
+        .then(() => setStatus(isProcessing ? 'PROCESSING' : 'BYPASSED'))
+        .catch(e => { console.error(e); setStatus('PLAYBACK BLOCKED'); });
 });
 document.getElementById('btn-stop').addEventListener('click',()=>{audioEl.pause();audioEl.currentTime=0;setStatus('STOPPED');});
 document.getElementById('btn-rw').addEventListener('click',()=>{if(audioEl.readyState)audioEl.currentTime=Math.max(0,audioEl.currentTime-5);});
@@ -720,14 +756,8 @@ function saveMp3(){
     setStatus('MP3 SAVED ✓');
 }
 
-// ── Playlist drawer ───────────────────────────────────────────────────────────
-const drawer  =document.getElementById('playlist-drawer');
-const overlay =document.getElementById('drawer-overlay');
-function openDrawer() { drawer.classList.add('open'); overlay.classList.add('visible'); }
-function closeDrawer(){ drawer.classList.remove('open'); overlay.classList.remove('visible'); }
-document.getElementById('btn-playlist-toggle').addEventListener('click', openDrawer);
-document.getElementById('drawer-close').addEventListener('click', closeDrawer);
-overlay.addEventListener('click', closeDrawer);
+// ── Playlist drawer (drawer & overlay consts declared above in File/folder section) ──
+
 
 // ── Status ────────────────────────────────────────────────────────────────────
 function setStatus(msg){statusEl.textContent=msg;}
